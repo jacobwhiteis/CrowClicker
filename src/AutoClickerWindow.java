@@ -1,4 +1,5 @@
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -31,33 +32,54 @@ public class AutoClickerWindow implements NativeKeyListener {
     private final AutoClicker autoclicker;
     private final int mouseButtonSelection;
     private final String activationTypeSelection;
+    private final String mouseButtonString;
     private final int burst;
+    private Label clickerStatus;
+    private final double x;
+    private final double y;
 
-    public AutoClickerWindow(double cps, String toggleKey, int mouseButtonSelection, String activationTypeSelection, int burst) {
+    public AutoClickerWindow(double cps, String toggleKey, int mouseButtonSelection, String mouseButtonString, String activationTypeSelection, int burst, double x, double y) {
         this.cps = cps;
         this.toggleKey = toggleKey;
-        autoclicker = new AutoClicker(cps, this, mouseButtonSelection);
+        autoclicker = new AutoClicker(cps, this, mouseButtonSelection, burst);
         this.mouseButtonSelection = mouseButtonSelection;
         this.activationTypeSelection = activationTypeSelection;
         this.burst = burst;
+        this.mouseButtonString = mouseButtonString;
+        this.x = x;
+        this.y = y;
     }
 
     public void display() {
         Stage window = new Stage();
+        window.setX(x);
+        window.setY(y);
 
         // window.initModality(Modality.APPLICATION_MODAL);
         window.setTitle("AutoClicker");
         window.setMinWidth(250);
 
-        Label label1 = new Label();
-        label1.setText("Clicking at " + cps + " clicks per second.");
+        Label clickerInfo = new Label();
+        clickerInfo.setText(mouseButtonString + " mouse at " +  cps + " clicks per second.");
 
+        Label clickerInfo2 = new Label();
+        clickerInfo2.setText("Activation Type: " + activationTypeSelection);
+
+        Label clickerInfo3 = new Label();
+        clickerInfo3.setText("Key: " + toggleKey);
+
+        VBox clickerInfoVBox = new VBox();
+        clickerInfoVBox.getChildren().addAll(clickerInfo, clickerInfo2, clickerInfo3);
+        clickerInfoVBox.setAlignment(Pos.CENTER);
+
+        clickerStatus = new Label();
+        clickerStatus.setText("Status: DISABLED");
 
         // Close window button
         Button closeButton = new Button("Close the window");
 
         VBox layout = new VBox(10);
-        layout.getChildren().addAll(label1, closeButton);
+        layout.getChildren().addAll(clickerInfoVBox, clickerStatus, closeButton);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(20, 20, 20, 20));
 
@@ -82,7 +104,6 @@ public class AutoClickerWindow implements NativeKeyListener {
             window.close();
         });
     }
-    //asdf
 
     public void cleanGlobalScreen() {
         try {
@@ -108,11 +129,17 @@ public class AutoClickerWindow implements NativeKeyListener {
                     System.out.println("Stopping thread...");
                     autoclicker.stopThread();
                     clickerEnabled = false;
+                    Platform.runLater(() -> {
+                        clickerStatus.setText("Status: DISABLED");
+                    });
                 }
                 else {
                     System.out.println("Starting thread...");
-                    autoclicker.startThread(burst);
+                    autoclicker.startThread();
                     clickerEnabled = true;
+                    Platform.runLater(() -> {
+                        clickerStatus.setText("Status: ENABLED");
+                    });
                 }
             }
         } else if (activationTypeSelection.equals("Hold")) {
@@ -120,16 +147,27 @@ public class AutoClickerWindow implements NativeKeyListener {
                 // Turning on auto-clicker
                 if (!clickerEnabled) {
                     System.out.println("Starting thread...");
-                    autoclicker.startThread(burst);
+                    autoclicker.startThread();
                     clickerEnabled = true;
+                    Platform.runLater(() -> {
+                        clickerStatus.setText("Status: ENABLED");
+                    });
                 }
             }
         } else if (activationTypeSelection.equals("Burst")) {
             if (NativeKeyEvent.getKeyText(e.getKeyCode()).toLowerCase().equals(toggleKey.toLowerCase())) {
-                // Turning on auto-clicker
-                System.out.println("Starting thread...");
-                autoclicker.startThread(burst);
-                clickerEnabled = true;
+                if (clickerEnabled) {
+                    // Set the counter to 0 in AutoClicker.java
+                    autoclicker.restartBurst();
+                } else {
+                    // Turning on auto-clicker
+                    System.out.println("Starting thread...");
+                    autoclicker.startThread();
+                    clickerEnabled = true;
+                    Platform.runLater(() -> {
+                        clickerStatus.setText("Status: ENABLED");
+                    });
+                }
             }
         }
     }
@@ -140,8 +178,15 @@ public class AutoClickerWindow implements NativeKeyListener {
             if (activationTypeSelection.equals("Hold")) {
                 autoclicker.stopThread();
                 clickerEnabled = false;
+                Platform.runLater(() -> {
+                    clickerStatus.setText("Status: DISABLED");
+                });
             }
         }
+    }
+
+    public void disableClickerFlag() {
+        clickerEnabled = false;
     }
 
 }

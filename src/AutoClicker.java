@@ -13,13 +13,16 @@ public class AutoClicker {
     private final double cps;
     private final AutoClickerWindow autoClickerWindow;
     private final int mouseButtonSelection;
+    private final int limiter;
+    private int counter;
 
     private volatile boolean threadRunning = false;
 
-    public AutoClicker(double cps, AutoClickerWindow autoClickerWindow, int mouseButtonSelection) {
+    public AutoClicker(double cps, AutoClickerWindow autoClickerWindow, int mouseButtonSelection, int limiter) {
         this.cps = cps;
         this.autoClickerWindow = autoClickerWindow;
         this.mouseButtonSelection = mouseButtonSelection;
+        this.limiter = limiter;
     }
 
     public void run() {
@@ -28,7 +31,7 @@ public class AutoClicker {
 
     Thread t;
 
-    public void startThread(int limiter) {
+    public void startThread() {
         t = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -37,7 +40,7 @@ public class AutoClicker {
                     // robot.delay(2000); // Wait 2 seconds before starting auto-clicker
                     int intervalMS = 1000/(int)cps;
                     threadRunning = true;
-                    int counter = 0;
+                    counter = 0;
                     while (threadRunning) {
                         System.out.println("Click!" + counter);
                         robot.mousePress(mouseButtonSelection);
@@ -46,6 +49,7 @@ public class AutoClicker {
                         if (counter==limiter) {
                             System.out.println("Burst limit of " + limiter + " reached.");
                             counter=0;
+                            autoClickerWindow.disableClickerFlag();
                             stopThread();
                         }
                         robot.delay(intervalMS);
@@ -63,5 +67,9 @@ public class AutoClicker {
 
     public void stopThread() {
         threadRunning = false;
+    }
+
+    public void restartBurst() {
+        counter = 0;
     }
 }

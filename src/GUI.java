@@ -1,5 +1,6 @@
 import com.sun.media.jfxmediaimpl.HostUtils;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -27,11 +28,11 @@ public class GUI extends Application {
     }
 
     // This needs to be declared up here because it needs to be modified from inside a lambda
-    Label keybindLabel;
+    private Label keybindLabel;
 
     @Override
     public void start(Stage window) {
-        window.setTitle("ClickManager 1.0.3");
+        window.setTitle("ClickManager 1.0.5");
         window.getIcons().add(new Image("file:AutoClickerLogo.png"));
 
         // Click speed label
@@ -75,6 +76,7 @@ public class GUI extends Application {
         // Key bind button
         Button keybindButton = new Button("[Bind key]");
         keybindButton.setFocusTraversable(false);
+        keybindButton.setPrefWidth(70);
         keybindButton.setOnAction(e -> {
             BindKey.display("Toggle key", "Press a key to bind...", keybindButton);
         });
@@ -94,17 +96,17 @@ public class GUI extends Application {
 
         // Left/right mouse button selection label
         Label mouseButtonSelectionLabel = new Label("Select mouse button:");
-        GridPane.setConstraints(mouseButtonSelectionLabel, 0, 5);
+        GridPane.setConstraints(mouseButtonSelectionLabel, 0, 4);
 
         // Left/right mouse button selection
         ChoiceBox<String> mouseButtonSelection = new ChoiceBox<>();
-        GridPane.setConstraints(mouseButtonSelection, 2, 5);
+        GridPane.setConstraints(mouseButtonSelection, 2, 4);
         mouseButtonSelection.getItems().addAll("Left", "Right");
         mouseButtonSelection.setValue("Left");
 
         // Launch auto-clicker button
         Button launchAutoClicker = new Button("Launch AutoClicker");
-        GridPane.setConstraints(launchAutoClicker, 2, 6);
+        GridPane.setConstraints(launchAutoClicker, 2, 5);
         launchAutoClicker.setOnAction(e -> {
             try {
                 if (cpsInput.getText().equals("")) {
@@ -120,7 +122,7 @@ public class GUI extends Application {
                     burst = Integer.parseInt(burstInput.getText());
                 }
                 System.out.println("Clicking at " + cpsInput.getText() + " clicks per second.");
-                AutoClickerWindow autoClickerWindow = new AutoClickerWindow(cps, toggleKey, getMouseChoice(mouseButtonSelection), activationTypeSelection.getValue(), burst);
+                AutoClickerWindow autoClickerWindow = new AutoClickerWindow(cps, toggleKey, getMouseChoice(mouseButtonSelection), mouseButtonSelection.getValue(), activationTypeSelection.getValue(), burst, window.getX(), window.getY());
                 autoClickerWindow.display();
                 try {
                     // Disabling logging spam
@@ -143,8 +145,16 @@ public class GUI extends Application {
 
         // Exit button
         Button exitButton = new Button("Exit");
-        GridPane.setConstraints(exitButton, 2, 7);
+        GridPane.setConstraints(exitButton, 2, 6);
         exitButton.setOnAction(e -> closeProgram(window));
+
+        // Clicks recording button
+        Button clickRecordButton = new Button("Test Clicks");
+        GridPane.setConstraints(clickRecordButton, 0, 6);
+        clickRecordButton.setOnAction(e -> {
+            ClickRecord clickRecord = new ClickRecord();
+            clickRecord.display();
+        });
 
         // GridPane
         GridPane grid = new GridPane();
@@ -152,7 +162,7 @@ public class GUI extends Application {
         grid.setVgap(8);
         grid.setHgap(10);
         grid.getColumnConstraints().add(new ColumnConstraints(130));
-        grid.getChildren().addAll(cpsLabel, cpsInput, activationTypeLabel, activationTypeInputs, keybindLabel, keybindButtons, launchAutoClicker, exitButton, mouseButtonSelectionLabel, mouseButtonSelection);
+        grid.getChildren().addAll(cpsLabel, cpsInput, activationTypeLabel, activationTypeInputs, keybindLabel, keybindButtons, launchAutoClicker, exitButton, mouseButtonSelectionLabel, mouseButtonSelection, clickRecordButton);
 
         window.setOnCloseRequest(e -> {
             e.consume();
@@ -178,6 +188,9 @@ public class GUI extends Application {
         boolean answer = ConfirmBox.display("Confirm Exit", "Are you sure you want to exit?");
         if (answer) {
             window.close();
+            Platform.exit();
+            System.exit(0);
         }
     }
+
 }
