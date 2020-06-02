@@ -20,6 +20,12 @@ import org.jnativehook.keyboard.NativeKeyListener;
 import org.jnativehook.mouse.NativeMouseEvent;
 import org.jnativehook.mouse.NativeMouseListener;
 
+import org.apache.commons.math3.distribution.EnumeratedIntegerDistribution;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -30,21 +36,56 @@ public class AutoClickerWindow implements NativeKeyListener {
     private final String toggleKey;
     private boolean clickerEnabled = false;
     private final AutoClicker autoclicker;
-    private final int mouseButtonSelection;
     private final String activationTypeSelection;
     private final String mouseButtonString;
-    private final int burst;
+
     private Label clickerStatus;
     private final double x;
     private final double y;
 
-    public AutoClickerWindow(double cps, String toggleKey, int mouseButtonSelection, String mouseButtonString, String activationTypeSelection, int burst, double x, double y) {
+    protected EnumeratedIntegerDistribution distribution = null;
+
+    public AutoClickerWindow(double cps, String toggleKey, int mouseButtonSelection, String mouseButtonString, String activationTypeSelection, boolean enableRandomizer, int burst, double x, double y) {
+        // Randomizer
+        // Read in probability distribution from file
+        int[] singletons = new int[0];
+        double[] probabilities = new double[0];
+        if (enableRandomizer) {
+            String singletonsFileName = "singletons.txt";
+            String probabilitiesFileName = "probabilities.txt";
+            try {
+                File singletonFile = new File(singletonsFileName);
+                Scanner input = new Scanner(singletonFile);
+                int singleton;
+                ArrayList<Integer> singletonsList = new ArrayList<>();
+                while (input.hasNextLine()) {
+                    singleton = Integer.parseInt(input.nextLine());
+                    singletonsList.add(singleton);
+                }
+                input.close();
+                File probabilitiesFile = new File(probabilitiesFileName);
+                input = new Scanner(probabilitiesFile);
+                double probability;
+                double probabilitySum = 0;
+                ArrayList<Double> probabilitiesList = new ArrayList<>();
+                while (input.hasNextLine()) {
+                    probability = Double.parseDouble(input.nextLine());
+                    probabilitiesList.add(probability);
+                    probabilitySum += probability;
+                }
+                probabilitiesList.set(0, 0.0);
+                singletons = singletonsList.stream().mapToInt(i -> i).toArray();
+                probabilities = probabilitiesList.stream().mapToDouble(i -> i).toArray();
+                this.distribution = new EnumeratedIntegerDistribution(singletons, probabilities);
+            } catch (Exception e) {
+                System.out.println("Error getting distribution txt file");
+                e.printStackTrace();
+            }
+        }
         this.cps = cps;
         this.toggleKey = toggleKey;
-        autoclicker = new AutoClicker(cps, this, mouseButtonSelection, burst);
-        this.mouseButtonSelection = mouseButtonSelection;
+        autoclicker = new AutoClicker(cps, this, mouseButtonSelection, burst, distribution, enableRandomizer);
         this.activationTypeSelection = activationTypeSelection;
-        this.burst = burst;
         this.mouseButtonString = mouseButtonString;
         this.x = x;
         this.y = y;
@@ -122,53 +163,56 @@ public class AutoClickerWindow implements NativeKeyListener {
 
     @Override
     public void nativeKeyPressed(NativeKeyEvent e) {
-        if (activationTypeSelection.equals("Toggle")) {
-            if (NativeKeyEvent.getKeyText(e.getKeyCode()).toLowerCase().equals(toggleKey.toLowerCase())) {
-                // Toggling auto-clicker
-                if (clickerEnabled) {
-                    System.out.println("Stopping thread...");
-                    autoclicker.stopThread();
-                    clickerEnabled = false;
-                    Platform.runLater(() -> {
-                        clickerStatus.setText("Status: DISABLED");
-                    });
+        switch (activationTypeSelection) {
+            case "Toggle":
+                if (NativeKeyEvent.getKeyText(e.getKeyCode()).toLowerCase().equals(toggleKey.toLowerCase())) {
+                    // Toggling auto-clicker
+                    if (clickerEnabled) {
+                        System.out.println("Stopping thread...");
+                        autoclicker.stopThread();
+                        clickerEnabled = false;
+                        Platform.runLater(() -> {
+                            clickerStatus.setText("Status: DISABLED");
+                        });
+                    } else {
+                        System.out.println("Starting thread...");
+                        autoclicker.startThread();
+                        clickerEnabled = true;
+                        Platform.runLater(() -> {
+                            clickerStatus.setText("Status: ENABLED");
+                        });
+                    }
                 }
-                else {
-                    System.out.println("Starting thread...");
-                    autoclicker.startThread();
-                    clickerEnabled = true;
-                    Platform.runLater(() -> {
-                        clickerStatus.setText("Status: ENABLED");
-                    });
-                }
-            }
-        } else if (activationTypeSelection.equals("Hold")) {
-            if (NativeKeyEvent.getKeyText(e.getKeyCode()).toLowerCase().equals(toggleKey.toLowerCase())) {
-                // Turning on auto-clicker
-                if (!clickerEnabled) {
-                    System.out.println("Starting thread...");
-                    autoclicker.startThread();
-                    clickerEnabled = true;
-                    Platform.runLater(() -> {
-                        clickerStatus.setText("Status: ENABLED");
-                    });
-                }
-            }
-        } else if (activationTypeSelection.equals("Burst")) {
-            if (NativeKeyEvent.getKeyText(e.getKeyCode()).toLowerCase().equals(toggleKey.toLowerCase())) {
-                if (clickerEnabled) {
-                    // Set the counter to 0 in AutoClicker.java
-                    autoclicker.restartBurst();
-                } else {
+                break;
+            case "Hold":
+                if (NativeKeyEvent.getKeyText(e.getKeyCode()).toLowerCase().equals(toggleKey.toLowerCase())) {
                     // Turning on auto-clicker
-                    System.out.println("Starting thread...");
-                    autoclicker.startThread();
-                    clickerEnabled = true;
-                    Platform.runLater(() -> {
-                        clickerStatus.setText("Status: ENABLED");
-                    });
+                    if (!clickerEnabled) {
+                        System.out.println("Starting thread...");
+                        autoclicker.startThread();
+                        clickerEnabled = true;
+                        Platform.runLater(() -> {
+                            clickerStatus.setText("Status: ENABLED");
+                        });
+                    }
                 }
-            }
+                break;
+            case "Burst":
+                if (NativeKeyEvent.getKeyText(e.getKeyCode()).toLowerCase().equals(toggleKey.toLowerCase())) {
+                    if (clickerEnabled) {
+                        // Set the counter to 0 in AutoClicker.java
+                        autoclicker.restartBurst();
+                    } else {
+                        // Turning on auto-clicker
+                        System.out.println("Starting thread...");
+                        autoclicker.startThread();
+                        clickerEnabled = true;
+                        Platform.runLater(() -> {
+                            clickerStatus.setText("Status: ENABLED");
+                        });
+                    }
+                }
+                break;
         }
     }
 

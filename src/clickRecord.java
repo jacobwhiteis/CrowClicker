@@ -49,6 +49,11 @@ public class ClickRecord implements NativeMouseListener {
     }
 
     public void display() {
+        // Disabling logging spam
+        LogManager.getLogManager().reset();
+        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+        logger.setLevel(Level.OFF);
+
         Stage window = new Stage();
 
         window.setTitle("Click record testing");
@@ -131,10 +136,6 @@ public class ClickRecord implements NativeMouseListener {
     public void startRecording() {
         System.out.println("Registering native hook...");
         try {
-            // Disabling logging spam
-            LogManager.getLogManager().reset();
-            Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-            logger.setLevel(Level.OFF);
             GlobalScreen.registerNativeHook();
         } catch (NativeHookException e) {
             e.printStackTrace();

@@ -1,4 +1,3 @@
-import com.sun.media.jfxmediaimpl.HostUtils;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -7,6 +6,9 @@ import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
@@ -15,6 +17,7 @@ import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.w3c.dom.ls.LSOutput;
 
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -104,15 +107,30 @@ public class GUI extends Application {
         mouseButtonSelection.getItems().addAll("Left", "Right");
         mouseButtonSelection.setValue("Left");
 
+        // Randomize yes/no label
+        Label randomizeLabel = new Label("Enabled randomizer");
+        GridPane.setConstraints(randomizeLabel, 0, 5);
+
+        // Randomize yes/no selection
+        CheckBox randomizeCheck = new CheckBox();
+        randomizeCheck.setSelected(true);
+        GridPane.setConstraints(randomizeCheck, 2, 5);
+
         // Launch auto-clicker button
         Button launchAutoClicker = new Button("Launch AutoClicker");
-        GridPane.setConstraints(launchAutoClicker, 2, 5);
+        GridPane.setConstraints(launchAutoClicker, 2, 6);
         launchAutoClicker.setOnAction(e -> {
             try {
                 if (cpsInput.getText().equals("")) {
                     throw new EmptyInputException("You must enter a CPS value.");
                 } else if (activationTypeSelection.getValue().equals("Burst") && burstInput.getText().equals("")) {
                     throw new EmptyInputException("You must enter a burst value.");
+                } else if (randomizeCheck.isSelected() && Integer.parseInt(cpsInput.getText()) > 100) {
+                    throw new HighClickSpeedException("The clicker is capped at 100 CPS when the randomizer is enabled.\nRead the README for more info.");
+                } else if (!randomizeCheck.isSelected() && Integer.parseInt(cpsInput.getText()) > 500) {
+                    throw new HighClickSpeedException("The clicker is capped at 500 CPS.\nRead the README for more info.");
+                } else if (keybindButton.getText().equals("[Bind key]")) {
+                    throw new NoKeybindException("You need to bind a key to the clicker.");
                 }
                 System.out.println("keybindButton text: " + keybindButton.getText());
                 String toggleKey = keybindButton.getText();
@@ -121,8 +139,8 @@ public class GUI extends Application {
                 if (activationTypeSelection.getValue().equals("Burst")) {
                     burst = Integer.parseInt(burstInput.getText());
                 }
-                System.out.println("Clicking at " + cpsInput.getText() + " clicks per second.");
-                AutoClickerWindow autoClickerWindow = new AutoClickerWindow(cps, toggleKey, getMouseChoice(mouseButtonSelection), mouseButtonSelection.getValue(), activationTypeSelection.getValue(), burst, window.getX(), window.getY());
+                boolean enableRandomizer = randomizeCheck.isSelected();
+                AutoClickerWindow autoClickerWindow = new AutoClickerWindow(cps, toggleKey, getMouseChoice(mouseButtonSelection), mouseButtonSelection.getValue(), activationTypeSelection.getValue(), enableRandomizer, burst, window.getX(), window.getY());
                 autoClickerWindow.display();
                 try {
                     // Disabling logging spam
@@ -140,17 +158,21 @@ public class GUI extends Application {
                 AlertBox.display("Invalid Format", "Inputs can only contain numbers.");
             } catch (EmptyInputException exception) {
                 AlertBox.display("Invalid Input", exception.getMessage());
+            } catch (HighClickSpeedException exception) {
+                AlertBox.display("CPS Error", exception.getMessage());
+            } catch (NoKeybindException exception) {
+                AlertBox.display("No Keybind", exception.getMessage());
             }
         });
 
         // Exit button
         Button exitButton = new Button("Exit");
-        GridPane.setConstraints(exitButton, 2, 6);
+        GridPane.setConstraints(exitButton, 2, 8);
         exitButton.setOnAction(e -> closeProgram(window));
 
         // Clicks recording button
         Button clickRecordButton = new Button("Test Clicks");
-        GridPane.setConstraints(clickRecordButton, 0, 6);
+        GridPane.setConstraints(clickRecordButton, 0, 8);
         clickRecordButton.setOnAction(e -> {
             ClickRecord clickRecord = new ClickRecord();
             clickRecord.display();
@@ -162,24 +184,24 @@ public class GUI extends Application {
         grid.setVgap(8);
         grid.setHgap(10);
         grid.getColumnConstraints().add(new ColumnConstraints(130));
-        grid.getChildren().addAll(cpsLabel, cpsInput, activationTypeLabel, activationTypeInputs, keybindLabel, keybindButtons, launchAutoClicker, exitButton, mouseButtonSelectionLabel, mouseButtonSelection, clickRecordButton);
+        grid.getChildren().addAll(cpsLabel, cpsInput, activationTypeLabel, activationTypeInputs, keybindLabel, keybindButtons, launchAutoClicker, exitButton, mouseButtonSelectionLabel, mouseButtonSelection, randomizeLabel, randomizeCheck, clickRecordButton);
 
         window.setOnCloseRequest(e -> {
             e.consume();
             closeProgram(window);
         });
 
-        Scene scene = new Scene(grid, 350, 230);
+        Scene scene = new Scene(grid, 350, 250);
         window.setScene(scene);
         window.show();
     }
 
     private int getMouseChoice(ChoiceBox<String> choiceBox) {
         if (choiceBox.getValue().equals("Left")) {
-            return InputEvent.BUTTON1_MASK;
+            return InputEvent.BUTTON1_DOWN_MASK;
         }
         else if (choiceBox.getValue().equals("Right")) {
-            return InputEvent.BUTTON3_MASK;
+            return InputEvent.BUTTON3_DOWN_MASK;
         }
         return 0;
     }
