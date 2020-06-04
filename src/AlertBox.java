@@ -12,8 +12,17 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+/**
+ * A window to alert the user of something, and allows them to click an "OK" button to confirm.
+ *
+ * @author Jaob Whiteis
+ */
 public class AlertBox {
-
+    /**
+     * Display the alert window
+     * @param title window title
+     * @param message message to display
+     */
     public static void display(String title, String message) {
         Stage window = new Stage();
 

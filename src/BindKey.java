@@ -9,9 +9,20 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+/**
+ * Window to allow user to bind a key to an action
+ *
+ * @author Jacob Whiteis
+ */
 public class BindKey {
 
-    public static KeyCode display(String title, String message, Button bindButton) {
+    /**
+     * Display the bind key window
+     * @param title title of window
+     * @param message message to display
+     * @param bindButton the button that displays the key binded
+     */
+    public static void display(String title, String message, Button bindButton) {
         Stage window = new Stage();
         KeyCode[] keyCode = {null};
 
@@ -38,13 +49,11 @@ public class BindKey {
         window.setScene(scene);
         window.show();
 
-        scene.setOnKeyPressed( e-> {
+        scene.setOnKeyPressed(e -> {
             bindButton.setText(String.valueOf(e.getCode()));
             window.close();
-            keyCode[0] = e.getCode();
         });
 
-        return keyCode[0];
     }
 
 }

@@ -24,19 +24,34 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
+/**
+ * The home GUI window of the autoclicker app. From here, settings such as speed, controls, and bindings can be modified.
+ * The autoclicker is also launched from this window by the press of a button.
+ *
+ * @author Jacob Whiteis
+ */
 public class GUI extends Application {
 
+    private Label activateBindLabel;
+
+    /**
+     * Call start main GUI
+     */
     public static void main(String[] args) {
         launch(args);
     }
 
-    // This needs to be declared up here because it needs to be modified from inside a lambda
-    private Label keybindLabel;
-
+    /**
+     * Start the main GUI
+     * @param window window
+     */
     @Override
     public void start(Stage window) {
-        window.setTitle("ClickManager 1.0.5");
-        window.getIcons().add(new Image("file:AutoClickerLogo.png"));
+
+        // Window title and icon
+        window.setTitle("CrowClicker");
+        Image image = new Image("file:resources/AutoClickerLogo.png");
+        window.getIcons().add(image);
 
         // Click speed label
         Label cpsLabel = new Label("Clicks per second:");
@@ -46,16 +61,16 @@ public class GUI extends Application {
         TextField cpsInput = new TextField();
         GridPane.setConstraints(cpsInput, 2, 1);
 
-        // Activation type label (toggle or hold)
-        Label activationTypeLabel = new Label("Activation type:");
-        GridPane.setConstraints(activationTypeLabel, 0, 2);
-
-        // Burst input text field
+        // Burst input text field (only visible when activationTypeLabel is set to "Burst")
         TextField burstInput = new TextField();
         burstInput.setVisible(false);
         burstInput.setPromptText("Clicks per burst");
 
-        // Activation type selection (toggle or hold)
+        // Activation type label (activate or hold)
+        Label activationTypeLabel = new Label("Activation type:");
+        GridPane.setConstraints(activationTypeLabel, 0, 2);
+
+        // Activation type selection (activate or hold)
         ChoiceBox<String> activationTypeSelection = new ChoiceBox<>();
         GridPane.setConstraints(activationTypeSelection, 2, 2);
         activationTypeSelection.getItems().addAll("Toggle", "Hold", "Burst");
@@ -63,7 +78,7 @@ public class GUI extends Application {
         activationTypeSelection.setMinWidth(70);
         activationTypeSelection.setOnAction(e -> {
             burstInput.setVisible(activationTypeSelection.getValue().equals("Burst"));
-            keybindLabel.setText(activationTypeSelection.getValue() + " auto-clicker KEY:");
+            activateBindLabel.setText(activationTypeSelection.getValue() + " auto-clicker KEY:");
         });
 
         // HBox for activation type selection
@@ -72,53 +87,78 @@ public class GUI extends Application {
         activationTypeInputs.getChildren().addAll(activationTypeSelection, burstInput);
         activationTypeInputs.setSpacing(10);
 
-        // Key bind label
-         keybindLabel = new Label("Toggle auto-clicker KEY:");
-        GridPane.setConstraints(keybindLabel, 0, 3);
+        // Activation bind label
+        activateBindLabel = new Label("Activation bind:");
+        GridPane.setConstraints(activateBindLabel, 0, 3);
 
-        // Key bind button
-        Button keybindButton = new Button("[Bind key]");
-        keybindButton.setFocusTraversable(false);
-        keybindButton.setPrefWidth(70);
-        keybindButton.setOnAction(e -> {
-            BindKey.display("Toggle key", "Press a key to bind...", keybindButton);
+        // Activation bind button
+        Button activateBindButton = new Button("[Bind key]");
+        activateBindButton.setFocusTraversable(false);
+        activateBindButton.setPrefWidth(90);
+        activateBindButton.setOnAction(e -> {
+            BindKey.display("activate key", "Press a key to bind...", activateBindButton);
         });
 
-        // Unbind key button
-        Button unbindKeyButton = new Button("[Unbind]");
-        unbindKeyButton.setFocusTraversable(false);
-        unbindKeyButton.setOnAction(e -> {
-            keybindButton.setText("[Bind key]");
+        // Unbind activation button
+        Button unbindActivateButton = new Button("[Unbind]");
+        unbindActivateButton.setFocusTraversable(false);
+        unbindActivateButton.setOnAction(e -> {
+            activateBindButton.setText("[Bind key]");
         });
 
-        // HBox for keybind buttons
-        HBox keybindButtons = new HBox();
-        GridPane.setConstraints(keybindButtons, 2, 3);
-        keybindButtons.setSpacing(10);
-        keybindButtons.getChildren().addAll(keybindButton, unbindKeyButton);
+        // HBox for activation bind buttons
+        HBox activateBindButtons = new HBox();
+        GridPane.setConstraints(activateBindButtons, 2, 3);
+        activateBindButtons.setSpacing(10);
+        activateBindButtons.getChildren().addAll(activateBindButton, unbindActivateButton);
+
+        // Lock bind label
+        Label lockBindLabel = new Label("Lock bind:");
+        GridPane.setConstraints(lockBindLabel, 0, 4);
+
+        // Lock bind button
+        Button lockBindButton = new Button("[Bind key]");
+        lockBindButton.setFocusTraversable(false);
+        lockBindButton.setPrefWidth(90);
+        lockBindButton.setOnAction(e -> {
+           BindKey.display("Lock key", "Press a key to bind...", lockBindButton);
+        });
+
+        // Unbind lock button
+        Button unbindLockButton = new Button("[Unbind]");
+        unbindLockButton.setFocusTraversable(false);
+        unbindLockButton.setOnAction(e -> {
+            lockBindButton.setText("[Bind key]");
+        });
+
+        // HBox for lock bind buttons
+        HBox lockBindButtons = new HBox();
+        GridPane.setConstraints(lockBindButtons, 2, 4);
+        lockBindButtons.setSpacing(10);
+        lockBindButtons.getChildren().addAll(lockBindButton, unbindLockButton);
 
         // Left/right mouse button selection label
         Label mouseButtonSelectionLabel = new Label("Select mouse button:");
-        GridPane.setConstraints(mouseButtonSelectionLabel, 0, 4);
+        GridPane.setConstraints(mouseButtonSelectionLabel, 0, 5);
 
-        // Left/right mouse button selection
+        // Left/right mouse button selection choice box
         ChoiceBox<String> mouseButtonSelection = new ChoiceBox<>();
-        GridPane.setConstraints(mouseButtonSelection, 2, 4);
+        GridPane.setConstraints(mouseButtonSelection, 2, 5);
         mouseButtonSelection.getItems().addAll("Left", "Right");
         mouseButtonSelection.setValue("Left");
 
-        // Randomize yes/no label
+        // Randomize label
         Label randomizeLabel = new Label("Enabled randomizer");
-        GridPane.setConstraints(randomizeLabel, 0, 5);
+        GridPane.setConstraints(randomizeLabel, 0, 6);
 
-        // Randomize yes/no selection
+        // Randomize selection
         CheckBox randomizeCheck = new CheckBox();
         randomizeCheck.setSelected(true);
-        GridPane.setConstraints(randomizeCheck, 2, 5);
+        GridPane.setConstraints(randomizeCheck, 2, 6);
 
         // Launch auto-clicker button
         Button launchAutoClicker = new Button("Launch AutoClicker");
-        GridPane.setConstraints(launchAutoClicker, 2, 6);
+        GridPane.setConstraints(launchAutoClicker, 2, 7);
         launchAutoClicker.setOnAction(e -> {
             try {
                 if (cpsInput.getText().equals("")) {
@@ -129,29 +169,30 @@ public class GUI extends Application {
                     throw new HighClickSpeedException("The clicker is capped at 100 CPS when the randomizer is enabled.\nRead the README for more info.");
                 } else if (!randomizeCheck.isSelected() && Integer.parseInt(cpsInput.getText()) > 500) {
                     throw new HighClickSpeedException("The clicker is capped at 500 CPS.\nRead the README for more info.");
-                } else if (keybindButton.getText().equals("[Bind key]")) {
+                } else if (activateBindButton.getText().equals("[Bind key]")) {
                     throw new NoKeybindException("You need to bind a key to the clicker.");
+                } else if (activateBindButton.getText().equals(lockBindButton.getText())) {
+                    throw new SameBindException("Use a unique bind for activation and lock.");
                 }
-                System.out.println("keybindButton text: " + keybindButton.getText());
-                String toggleKey = keybindButton.getText();
-                int cps = Integer.parseInt(cpsInput.getText());
+                String activateBind = activateBindButton.getText();
+                String lockBind = lockBindButton.getText();
+                int cps = Integer.parseInt(cpsInput.getText()); // Clicks per second
                 int burst = -1;
                 if (activationTypeSelection.getValue().equals("Burst")) {
-                    burst = Integer.parseInt(burstInput.getText());
+                    burst = Integer.parseInt(burstInput.getText()); // if Burst mode is enabled, burst is set to a positive value. Otherwise, burst = -1
                 }
-                boolean enableRandomizer = randomizeCheck.isSelected();
-                AutoClickerWindow autoClickerWindow = new AutoClickerWindow(cps, toggleKey, getMouseChoice(mouseButtonSelection), mouseButtonSelection.getValue(), activationTypeSelection.getValue(), enableRandomizer, burst, window.getX(), window.getY());
+                boolean enableRandomizer = randomizeCheck.isSelected(); // Check whether we should enable the pattern randomizer, or just click consistently
+                AutoClickerWindow autoClickerWindow = new AutoClickerWindow(cps, activateBind, lockBind, getMouseChoice(mouseButtonSelection), mouseButtonSelection.getValue(), activationTypeSelection.getValue(), enableRandomizer, burst, window.getX(), window.getY());
                 autoClickerWindow.display();
                 try {
                     // Disabling logging spam
                     LogManager.getLogManager().reset();
                     Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
                     logger.setLevel(Level.OFF);
-                    System.out.println("Registering native hook...");
+                    // Prepare jnativehook's global key listener
                     GlobalScreen.registerNativeHook();
                     GlobalScreen.addNativeKeyListener(autoClickerWindow);
                 } catch (NativeHookException ex) {
-                    System.out.println("NativeHookException");
                     ex.printStackTrace();
                 }
             } catch (NumberFormatException exception) {
@@ -162,6 +203,8 @@ public class GUI extends Application {
                 AlertBox.display("CPS Error", exception.getMessage());
             } catch (NoKeybindException exception) {
                 AlertBox.display("No Keybind", exception.getMessage());
+            } catch (SameBindException exception) {
+                AlertBox.display("Same Keybind", exception.getMessage());
             }
         });
 
@@ -170,12 +213,10 @@ public class GUI extends Application {
         GridPane.setConstraints(exitButton, 2, 8);
         exitButton.setOnAction(e -> closeProgram(window));
 
-        // Clicks recording button
-        Button clickRecordButton = new Button("Test Clicks");
-        GridPane.setConstraints(clickRecordButton, 0, 8);
-        clickRecordButton.setOnAction(e -> {
-            ClickRecord clickRecord = new ClickRecord();
-            clickRecord.display();
+        // On close
+        window.setOnCloseRequest(e -> {
+            e.consume();
+            closeProgram(window);
         });
 
         // GridPane
@@ -184,18 +225,19 @@ public class GUI extends Application {
         grid.setVgap(8);
         grid.setHgap(10);
         grid.getColumnConstraints().add(new ColumnConstraints(130));
-        grid.getChildren().addAll(cpsLabel, cpsInput, activationTypeLabel, activationTypeInputs, keybindLabel, keybindButtons, launchAutoClicker, exitButton, mouseButtonSelectionLabel, mouseButtonSelection, randomizeLabel, randomizeCheck, clickRecordButton);
+        grid.getChildren().addAll(cpsLabel, cpsInput, activationTypeLabel, activationTypeInputs, activateBindLabel, activateBindButtons, lockBindLabel, lockBindButtons, launchAutoClicker, exitButton, mouseButtonSelectionLabel, mouseButtonSelection, randomizeLabel, randomizeCheck);
 
-        window.setOnCloseRequest(e -> {
-            e.consume();
-            closeProgram(window);
-        });
-
-        Scene scene = new Scene(grid, 350, 250);
+        Scene scene = new Scene(grid, 350, 280);
         window.setScene(scene);
         window.show();
     }
 
+    /**
+     * Determines which mouse button the user wants the autoclicker to click.
+     *
+     * @param choiceBox the ChoiceBox for the mousebutton selection
+     * @return the integer value of the button down mask selected
+     */
     private int getMouseChoice(ChoiceBox<String> choiceBox) {
         if (choiceBox.getValue().equals("Left")) {
             return InputEvent.BUTTON1_DOWN_MASK;
@@ -206,6 +248,11 @@ public class GUI extends Application {
         return 0;
     }
 
+    /**
+     * Shows a confirmation box and ensures a clean exit upon request.
+     *
+     * @param window the window being closed
+     */
     private void closeProgram(Stage window) {
         boolean answer = ConfirmBox.display("Confirm Exit", "Are you sure you want to exit?");
         if (answer) {

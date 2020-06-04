@@ -12,10 +12,21 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+/**
+ * A window to give the user a yes/no choice for something.
+ *
+ * @author Jacob Whiteis
+ */
 public class ConfirmBox {
 
     static boolean answer;
 
+    /**
+     * Displays the confirm window.
+     * @param title the title of the confirm window
+     * @param message the message displayed
+     * @return a boolean corresponding to what the user selected
+     */
     public static boolean display(String title, String message) {
         Stage window = new Stage();
 
