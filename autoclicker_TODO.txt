@@ -1,5 +1,0 @@
--Features to implement-
-
--Select left/right mouse buttons
--Select keyboard button or mouse button for toggle bind
--Toggle key or hold key
